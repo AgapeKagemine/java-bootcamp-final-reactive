@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bootcamp.dto.OrderDTO;
 import com.bootcamp.products.entity.Products;
-import com.bootcamp.products.exception.NotFoundException;
 import com.bootcamp.products.service.ProductsService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +41,7 @@ public class ProductsController {
         log.info("Fetching product with id: {}", id);
 
         return productsService.getProductById(id)
-                .map(ResponseEntity::ok).switchIfEmpty(Mono.error(new NotFoundException("Product ID not found")));
+                .map(ResponseEntity::ok);
     }
 
     @PostMapping("/add")
@@ -55,31 +54,4 @@ public class ProductsController {
         return productsService.deduct(orderDTO).map(ResponseEntity::ok);
     }
 
-    // @PostMapping
-    // @ResponseStatus(HttpStatus.CREATED)
-    // public Mono<Products> createProduct(@Valid @RequestBody ProductsDTO
-    // productDTO) {
-    // log.info("Received request to create product: {}", productDTO);
-
-    // return productsService.createProduct(productDTO);
-    // }
-
-    // @PutMapping("/{id}")
-    // public Mono<ResponseEntity<Products>> updateProduct(@PathVariable Long id,
-    // @Valid @RequestBody ProductsDTO productDTO) {
-    // log.info("Updating product with id: {}", id);
-
-    // return productsService.updateProduct(id, productDTO)
-    // .map(ResponseEntity::ok)
-    // .defaultIfEmpty(ResponseEntity.notFound().build());
-    // }
-
-    // @DeleteMapping("/{id}")
-    // public Mono<ResponseEntity<Void>> deleteProduct(@PathVariable Long id) {
-    // log.info("Deleting product with id: {}", id);
-
-    // return productsService.deleteProduct(id)
-    // .then(Mono.just(ResponseEntity.noContent().<Void>build()))
-    // .onErrorResume(ex -> Mono.just(ResponseEntity.notFound().build()));
-    // }
 }

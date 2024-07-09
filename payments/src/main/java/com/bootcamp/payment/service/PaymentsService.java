@@ -63,7 +63,6 @@ public class PaymentsService {
             payments.setPayment_date(LocalDate.now());
             payments.setMode(request.getPayment_method());
             payments.setReference_number(UUID.randomUUID().toString());
-            log.info("PAYMENTS " + payments);
             paymentsRepository.save(payments).subscribe();
             return Mono.just(request);
         });

@@ -1,4 +1,4 @@
-package com.bootcamp.orchestrator;
+package com.bootcamp.orchestrator.config;
 
 import com.bootcamp.dto.OrderDTO;
 

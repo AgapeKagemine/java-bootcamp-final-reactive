@@ -1,4 +1,4 @@
-package com.bootcamp.orchestrator;
+package com.bootcamp.orchestrator.config;
 
 import java.util.HashMap;
 import java.util.Map;

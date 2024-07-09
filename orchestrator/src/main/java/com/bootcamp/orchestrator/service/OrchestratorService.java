@@ -9,10 +9,9 @@ import com.bootcamp.dto.OrderDTO;
 import com.bootcamp.enums.OrderStatus;
 import com.bootcamp.enums.PaymentStatus;
 import com.bootcamp.enums.ProductStatus;
-import com.bootcamp.orchestrator.KafkaProducer;
+import com.bootcamp.orchestrator.config.KafkaProducer;
 
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
@@ -22,7 +21,7 @@ public class OrchestratorService {
     private WebClient webClient;
 
     private static final String baseProductsUrl = "http://127.0.0.1:8001/api/products";
-    private static final String basePaymentUrl = "http://127.0.0.1:8004/api/payments";
+    private static final String basePaymentUrl = "http://127.0.0.1:8002/api/payments";
 
     public OrchestratorService(KafkaProducer kafkaProducer, WebClient webClient) {
         this.kafkaProducer = kafkaProducer;
@@ -42,7 +41,6 @@ public class OrchestratorService {
                 .doOnError(err -> {
                     orderDTO.setOrder_status(OrderStatus.FAILED.name());
                     kafkaProducer.sendMessage("order-response", orderDTO);
-                    Mono.error(new RuntimeException("Unreachable! " + err));
                 })
                 .doOnSuccess(product -> {
                     if (product == null) {
@@ -65,7 +63,14 @@ public class OrchestratorService {
                             .doOnError(err -> {
                                 orderDTO.setOrder_status(OrderStatus.FAILED.name());
                                 kafkaProducer.sendMessage("order-response", orderDTO);
-                                Mono.error(new RuntimeException("Unreachable! " + err));
+                                webClient.post()
+                                        .uri(baseProductsUrl + "/add")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .bodyValue(orderDTO)
+                                        .retrieve()
+                                        .bodyToMono(OrderDTO.class)
+                                        .subscribe();
                             }).doOnSuccess(payment -> {
                                 if (payment == null) {
                                     orderDTO.setOrder_status(OrderStatus.FAILED.name());
@@ -74,7 +79,7 @@ public class OrchestratorService {
                                 }
                                 if (payment.getOrder_status().equals(PaymentStatus.REJECTED.name())) {
                                     payment.setOrder_status(OrderStatus.FAILED.name());
-                                    var test = webClient.post()
+                                    webClient.post()
                                             .uri(baseProductsUrl + "/add")
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .accept(MediaType.APPLICATION_JSON)
@@ -82,20 +87,13 @@ public class OrchestratorService {
                                             .retrieve()
                                             .bodyToMono(OrderDTO.class)
                                             .subscribe();
-                                    log.info("Rollback? " + test);
                                 } else {
                                     payment.setOrder_status(OrderStatus.COMPLETED.name());
                                 }
                                 kafkaProducer.sendMessage("order-response", payment);
-                                return;
                             }).subscribe();
                 })
                 .subscribe();
     }
-
-    // public Mono<OrdersRequest> create() {
-    // return webClient.get().uri(baseOrderUrl +
-    // "/create").retrieve().bodyToMono(OrdersRequest.class);
-    // }
 
 }

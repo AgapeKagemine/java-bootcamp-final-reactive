@@ -14,9 +14,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.bootcamp.payment.exception.NotFoundException;
-import com.bootcamp.payment.exception.PaymentsException;
-
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
@@ -59,22 +56,6 @@ public class GlobalExceptionHandler {
         log.error("Response status error: {}", ex.getMessage());
 
         return Mono.just(ResponseEntity.status(ex.getStatusCode()).body(ex.getReason()));
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
-        log.error("Not found error: {}", ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(PaymentsException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleNotFoundException(PaymentsException ex) {
-        log.error("Not found error: {}", ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

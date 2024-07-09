@@ -11,14 +11,10 @@ import com.bootcamp.enums.OrderStatus;
 import com.bootcamp.orders.config.KafkaProducer;
 import com.bootcamp.orders.entity.Orders;
 import com.bootcamp.orders.entity.OrdersItem;
-import com.bootcamp.orders.exception.NotFoundException;
-import com.bootcamp.orders.exception.RequestException;
 import com.bootcamp.orders.repository.OrdersItemRepository;
 import com.bootcamp.orders.repository.OrdersRepository;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,27 +39,17 @@ public class OrdersService {
 
     public Flux<Orders> findAllOrders() {
         log.info("Fetching all orders");
-
-        return ordersRepository.findAll()
-                .onErrorMap(e -> {
-                    log.error("Error fetching all orders: {}", e.getMessage());
-                    return new RequestException("Failed to fetch all orders");
-                });
+        return ordersRepository.findAll();
     }
 
-    public Mono<Orders> getOrderById(@NotNull @Min(1) Long id) {
+    public Mono<Orders> getOrderById(Long id) {
         log.info("Fetching order by id: {}", id);
-
         return ordersRepository.findById(id)
-                .onErrorMap(e -> {
-                    log.error("Error fetching order with id {}: {}", id, e.getMessage());
-                    return new RequestException("Failed to fetch order with id " + id);
-                }).switchIfEmpty(Mono.error(new NotFoundException("Order with id " + id + " not found")));
+                .switchIfEmpty(Mono.empty());
     }
 
     public Mono<Orders> createOrder(@Valid OrderRequest request) {
         log.info("Creating order: {}", request);
-
         Orders orders = new Orders();
         orders.setCustomer_id(request.getCustomer_id());
         orders.setBilling_address(request.getBilling_address());
@@ -72,7 +58,6 @@ public class OrdersService {
         orders.setPayment_method(request.getPayment_method());
         orders.setShipping_address(request.getShipping_address());
         orders.setTotal_amount(0.0);
-
         return ordersRepository.save(orders).flatMap(order -> {
             OrdersItem ordersItem = new OrdersItem();
             ordersItem.setOrder_id(order.getId());
@@ -101,6 +86,7 @@ public class OrdersService {
 
     @KafkaListener(topics = "order-response")
     public void updateOrder(OrderDTO request) {
+        log.info("Updating order: {}", request);
         ordersRepository.findById(request.getId()).flatMap(order -> {
             order.setTotal_amount(request.getTotal_amount());
             order.setOrder_status(request.getOrder_status());

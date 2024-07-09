@@ -30,7 +30,7 @@ public class ProductsService {
 
     public Mono<Products> getProductById(Long id) {
         log.info("Fetching product by id: {}", id);
-        return productsRepository.findById(id);
+        return productsRepository.findById(id).switchIfEmpty(Mono.empty());
     }
 
     public Mono<OrderDTO> deduct(OrderDTO orderDTO) {
@@ -47,10 +47,14 @@ public class ProductsService {
                 orderDTO.setOrder_status(ProductStatus.OUTOFSTOCK.name());
             }
             return Mono.just(orderDTO);
-        }).switchIfEmpty(Mono.just(orderDTO));
+        }).switchIfEmpty(Mono.defer(() -> {
+            orderDTO.setOrder_status(ProductStatus.OUTOFSTOCK.name());
+            return Mono.just(orderDTO);
+        }));
     }
 
     public Mono<OrderDTO> add(OrderDTO orderDTO) {
+        log.info("Rolling Back: " + orderDTO);
         return productsRepository.findById(orderDTO.getOrder_items().getProduct_id()).flatMap(item -> {
             item.setStock_quantity(item.getStock_quantity() + orderDTO.getOrder_items().getQuantity());
             item.setUpdated_at(LocalDate.now());
@@ -58,73 +62,5 @@ public class ProductsService {
             return Mono.just(orderDTO);
         });
     }
-
-    // @Transactional
-    // public Mono<Products> createProduct(@NotNull @Valid ProductsDTO productDTO) {
-    // log.info("Creating product: {}", productDTO);
-
-    // Products product = mapToEntity(productDTO);
-    // return productsRepository.save(product);
-    // // .doOnSuccess(savedPayment -> log.info("Payment created: {}",
-    // savedPayment))
-    // // .doOnError(error -> log.error("Error creating payment: {}",
-    // // error.getMessage()))
-    // // .onErrorMap(e -> {
-    // // log.error("Error creating product: {}", e.getMessage());
-    // // return new RequestException("Failed to create product");
-    // // });
-    // }
-
-    // @Transactional
-    // public Mono<Products> updateProduct(Long id, @NotNull @Valid ProductsDTO
-    // productDTO) {
-    // log.info("Updating product with id {}: {}", id, productDTO);
-
-    // return productsRepository.findById(id)
-    // .flatMap(f -> {
-    // Products product = mapToEntity(productDTO);
-    // product.setId(id);
-    // product.setCreated_at(f.getCreated_at());
-    // product.setUpdated_at(LocalDate.now());
-    // return productsRepository.save(product);
-    // });
-    // // .doOnSuccess(savedPayment -> log.info("Payment created: {}",
-    // savedPayment))
-    // // .doOnError(error -> log.error("Error creating payment: {}",
-    // // error.getMessage()))
-    // // .onErrorMap(e -> {
-    // // log.error("Error updating product: {}", e.getMessage());
-    // // return new RequestException("Failed to update product");
-    // // })
-    // // .switchIfEmpty(Mono.error(new RequestException("Product with id " + id + "
-    // // not found")));
-
-    // }
-
-    // @Transactional
-    // public Mono<Void> deleteProduct(Long id) {
-    // log.info("Deleting product with id: {}", id);
-
-    // return productsRepository.deleteById(id);
-    // // .doOnSuccess(savedPayment -> log.info("Payment created: {}",
-    // savedPayment))
-    // // .doOnError(error -> log.error("Error creating payment: {}",
-    // // error.getMessage()))
-    // // .onErrorMap(e -> {
-    // // log.error("Error deleting product with id {}: {}", id, e.getMessage());
-    // // return new RequestException("Failed to delete product with id " + id);
-    // // });
-    // }
-
-    // private Products mapToEntity(ProductsDTO productDTO) {
-    // Products product = new Products();
-    // product.setName(productDTO.getName());
-    // product.setPrice(productDTO.getPrice());
-    // product.setCategory(productDTO.getCategory());
-    // product.setDescription(productDTO.getDescription());
-    // product.setImage_url(productDTO.getImage_url());
-    // product.setStock_quantity(productDTO.getStock_quantity());
-    // return product;
-    // }
 
 }
