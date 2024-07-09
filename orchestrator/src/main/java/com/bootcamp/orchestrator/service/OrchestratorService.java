@@ -75,6 +75,14 @@ public class OrchestratorService {
                                 if (payment == null) {
                                     orderDTO.setOrder_status(OrderStatus.FAILED.name());
                                     kafkaProducer.sendMessage("order-response", orderDTO);
+                                    webClient.post()
+                                            .uri(baseProductsUrl + "/add")
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .accept(MediaType.APPLICATION_JSON)
+                                            .bodyValue(orderDTO)
+                                            .retrieve()
+                                            .bodyToMono(OrderDTO.class)
+                                            .subscribe();
                                     return;
                                 }
                                 if (payment.getOrder_status().equals(PaymentStatus.REJECTED.name())) {
@@ -87,9 +95,8 @@ public class OrchestratorService {
                                             .retrieve()
                                             .bodyToMono(OrderDTO.class)
                                             .subscribe();
-                                } else {
+                                } else
                                     payment.setOrder_status(OrderStatus.COMPLETED.name());
-                                }
                                 kafkaProducer.sendMessage("order-response", payment);
                             }).subscribe();
                 })
