@@ -46,11 +46,6 @@ public class OrchestratorService {
                     return Mono.empty();
                 })
                 .doOnSuccess(product -> {
-                    if (product == null) {
-                        orderDTO.setOrder_status(OrderStatus.FAILED.name());
-                        kafkaProducer.sendMessage("order-response", orderDTO);
-                        return;
-                    }
                     if (product.getOrder_status().equals(ProductStatus.OUTOFSTOCK.name())) {
                         product.setOrder_status(OrderStatus.FAILED.name());
                         kafkaProducer.sendMessage("order-response", product);
@@ -77,19 +72,6 @@ public class OrchestratorService {
                                         .subscribe();
                                 return Mono.empty();
                             }).doOnSuccess(payment -> {
-                                if (payment == null) {
-                                    orderDTO.setOrder_status(OrderStatus.FAILED.name());
-                                    kafkaProducer.sendMessage("order-response", orderDTO);
-                                    webClient.post()
-                                            .uri(baseProductsUrl + "/add")
-                                            .contentType(MediaType.APPLICATION_JSON)
-                                            .accept(MediaType.APPLICATION_JSON)
-                                            .bodyValue(orderDTO)
-                                            .retrieve()
-                                            .bodyToMono(OrderDTO.class)
-                                            .subscribe();
-                                    return;
-                                }
                                 if (payment.getOrder_status().equals(PaymentStatus.REJECTED.name())) {
                                     payment.setOrder_status(OrderStatus.FAILED.name());
                                     webClient.post()
@@ -100,8 +82,10 @@ public class OrchestratorService {
                                             .retrieve()
                                             .bodyToMono(OrderDTO.class)
                                             .subscribe();
-                                } else
-                                    payment.setOrder_status(OrderStatus.COMPLETED.name());
+                                    kafkaProducer.sendMessage("order-response", payment);
+                                    return;
+                                }
+                                payment.setOrder_status(OrderStatus.COMPLETED.name());
                                 kafkaProducer.sendMessage("order-response", payment);
                             }).subscribe();
                 })

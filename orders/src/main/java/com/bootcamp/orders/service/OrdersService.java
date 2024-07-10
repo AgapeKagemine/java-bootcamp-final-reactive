@@ -2,6 +2,7 @@ package com.bootcamp.orders.service;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import com.bootcamp.dto.OrderDTO;
@@ -48,6 +49,7 @@ public class OrdersService {
                 .switchIfEmpty(Mono.empty());
     }
 
+    @Transactional
     public Mono<Orders> createOrder(@Valid OrderRequest request) {
         log.info("Creating order: {}", request);
         Orders orders = new Orders();

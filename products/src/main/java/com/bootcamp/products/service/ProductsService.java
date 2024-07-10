@@ -3,6 +3,7 @@ package com.bootcamp.products.service;
 import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bootcamp.dto.OrderDTO;
 import com.bootcamp.enums.ProductStatus;
@@ -33,6 +34,7 @@ public class ProductsService {
         return productsRepository.findById(id).switchIfEmpty(Mono.empty());
     }
 
+    @Transactional
     public Mono<OrderDTO> deduct(OrderDTO orderDTO) {
         log.info("Request: " + orderDTO);
         return productsRepository.findById(orderDTO.getOrder_items().getProduct_id()).flatMap(item -> {
@@ -53,6 +55,7 @@ public class ProductsService {
         }));
     }
 
+    @Transactional
     public Mono<OrderDTO> add(OrderDTO orderDTO) {
         log.info("Rolling Back: " + orderDTO);
         return productsRepository.findById(orderDTO.getOrder_items().getProduct_id()).flatMap(item -> {
