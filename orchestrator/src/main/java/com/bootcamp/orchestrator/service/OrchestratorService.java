@@ -12,6 +12,7 @@ import com.bootcamp.enums.ProductStatus;
 import com.bootcamp.orchestrator.config.KafkaProducer;
 
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
@@ -31,16 +32,18 @@ public class OrchestratorService {
     @KafkaListener(topics = "order-create", groupId = "final-group")
     public void orchestrate(OrderDTO orderDTO) {
         log.info("ORCHESTRATOR: " + orderDTO);
+        var test = orderDTO;
         webClient.post()
                 .uri(baseProductsUrl + "/deduct")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(orderDTO)
+                .bodyValue(test)
                 .retrieve()
                 .bodyToMono(OrderDTO.class)
-                .doOnError(err -> {
+                .onErrorResume(err -> {
                     orderDTO.setOrder_status(OrderStatus.FAILED.name());
                     kafkaProducer.sendMessage("order-response", orderDTO);
+                    return Mono.empty();
                 })
                 .doOnSuccess(product -> {
                     if (product == null) {
@@ -60,7 +63,8 @@ public class OrchestratorService {
                             .bodyValue(product)
                             .retrieve()
                             .bodyToMono(OrderDTO.class)
-                            .doOnError(err -> {
+                            .onErrorResume(err -> {
+                                log.error("PAYMENTS NOT CONNECTED : " + err);
                                 orderDTO.setOrder_status(OrderStatus.FAILED.name());
                                 kafkaProducer.sendMessage("order-response", orderDTO);
                                 webClient.post()
@@ -71,6 +75,7 @@ public class OrchestratorService {
                                         .retrieve()
                                         .bodyToMono(OrderDTO.class)
                                         .subscribe();
+                                return Mono.empty();
                             }).doOnSuccess(payment -> {
                                 if (payment == null) {
                                     orderDTO.setOrder_status(OrderStatus.FAILED.name());

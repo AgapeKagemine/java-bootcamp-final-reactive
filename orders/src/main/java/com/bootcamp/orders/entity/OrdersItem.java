@@ -5,6 +5,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,11 +16,17 @@ import lombok.NoArgsConstructor;
 @Table("orders_item")
 public class OrdersItem {
 
+    // id BIGSERIAL PRIMARY KEY,
+    // price FLOAT(8) NOT NULL,
+    // product_id INTEGER NOT NULL,
+    // quantity INTEGER NOT NULL,
+    // order_id BIGINT NOT NULL,
+
     @Id
     private Long id;
 
     @NotNull(message = "Price is mandatory")
-    @Positive(message = "Price must be positive")
+    @PositiveOrZero(message = "Price must be positive")
     private Double price;
 
     @NotNull(message = "Product ID is mandatory")

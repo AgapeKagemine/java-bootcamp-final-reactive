@@ -65,85 +65,10 @@ public class PaymentsService {
             payments.setReference_number(UUID.randomUUID().toString());
             paymentsRepository.save(payments).subscribe();
             return Mono.just(request);
-        });
+        }).switchIfEmpty(Mono.defer(() -> {
+            request.setOrder_status(PaymentStatus.REJECTED.name());
+            return Mono.just(request);
+        }));
     }
 
-    // public Mono<Payments> createPayment(@Valid PaymentsDTO paymentDTO) {
-    // Payments payment = mapToEntity(paymentDTO);
-    // return paymentsRepository.save(payment);
-    // // .doOnSuccess(savedPayment -> log.info("Payment created: {}",
-    // savedPayment))
-    // // .doOnError(error -> log.error("Error creating payment: {}",
-    // // error.getMessage()))
-    // // .onErrorMap(e -> {
-    // // log.error("Error fetching all products: {}", e.getMessage());
-    // // return new PaymentsException("Failed to fetch all products");
-    // // });
-    // }
-
-    // public Mono<Payments> getPaymentById(@NotNull Long id) {
-    // return paymentsRepository.findById(id);
-    // // .doOnNext(payment -> log.info("Payment retrieved: {}", payment))
-    // // .doOnError(error -> log.error("Error retrieving payment by ID: {}",
-    // // error.getMessage()))
-    // // .onErrorMap(e -> {
-    // // log.error("Error fetching all products: {}", e.getMessage());
-    // // return new PaymentsException("Failed to fetch all products");
-    // // })
-    // // .switchIfEmpty(Mono.error(new RuntimeException("Payment not found")));
-    // }
-
-    // public Flux<Payments> getAllPayments() {
-    // return paymentsRepository.findAll();
-    // // .doOnComplete(() -> log.info("All payments retrieved"))
-    // // .doOnError(error -> log.error("Error retrieving all payments: {}",
-    // // error.getMessage()))
-    // // .onErrorMap(e -> {
-    // // log.error("Error fetching all products: {}", e.getMessage());
-    // // return new PaymentsException("Failed to fetch all products");
-    // // });
-    // }
-
-    // public Mono<Payments> updatePayment(@NotNull Long id, @Valid PaymentsDTO
-    // paymentDTO) {
-    // return paymentsRepository.findById(id)
-    // .flatMap(existingPayment -> {
-    // existingPayment = mapToEntity(paymentDTO);
-    // existingPayment.setId(id);
-    // existingPayment.setPayment_date(LocalDate.now());
-    // existingPayment.setReference_number(java.util.UUID.randomUUID().toString());
-    // return paymentsRepository.save(existingPayment)
-    // .doOnSuccess(updatedPayment -> log.info("Payment updated: {}",
-    // updatedPayment))
-    // .doOnError(error -> log.error("Error updating payment: {}",
-    // error.getMessage()));
-    // });
-    // // .switchIfEmpty(Mono.error(new RuntimeException("Payment not found")))
-    // // .onErrorMap(e -> {
-    // // log.error("Error fetching all products: {}", e.getMessage());
-    // // return new PaymentsException("Failed to fetch all products");
-    // // });
-    // }
-
-    // public Mono<Void> deletePayment(@NotNull Long id) {
-    // return paymentsRepository.deleteById(id);
-    // // .doOnSuccess(unused -> log.info("Payment deleted with ID: {}", id))
-    // // .doOnError(error -> log.error("Error deleting payment: {}",
-    // // error.getMessage()))
-    // // .onErrorMap(e -> {
-    // // log.error("Error fetching all products: {}", e.getMessage());
-    // // return new PaymentsException("Failed to fetch all products");
-    // // });
-    // }
-
-    // public Payments mapToEntity(PaymentsDTO paymentDTO) {
-    // var payment = new Payments();
-    // payment.setAmount(paymentDTO.getAmount());
-    // payment.setMode(paymentDTO.getMode());
-    // payment.setOrder_id(paymentDTO.getOrder_id());
-    // payment.setPayment_date(paymentDTO.getPayment_date());
-    // payment.setReference_number(paymentDTO.getReference_number());
-    // payment.setStatus(paymentDTO.getStatus());
-    // return payment;
-    // }
 }

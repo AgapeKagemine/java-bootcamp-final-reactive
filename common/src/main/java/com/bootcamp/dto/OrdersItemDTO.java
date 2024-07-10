@@ -2,6 +2,7 @@ package com.bootcamp.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +22,7 @@ public class OrdersItemDTO {
     private Long product_id;
 
     @NotNull(message = "Quantity is mandatory")
-    @Positive(message = "Quantity must be positive")
+    @PositiveOrZero(message = "Quantity must be positive")
     private Integer quantity;
 
     @NotNull(message = "Order ID is mandatory")

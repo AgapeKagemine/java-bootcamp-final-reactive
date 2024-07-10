@@ -70,6 +70,7 @@ public class OrdersService {
                 orderItem.setOrder_id(item.getOrder_id());
                 orderItem.setQuantity(item.getQuantity());
                 orderItem.setProduct_id(item.getProduct_id());
+                orderItem.setPrice(item.getPrice());
                 OrderDTO orderDTO = new OrderDTO();
                 orderDTO.setId(order.getId());
                 orderDTO.setCustomer_id(order.getCustomer_id());
@@ -86,9 +87,8 @@ public class OrdersService {
 
     @KafkaListener(topics = "order-response")
     public void updateOrder(OrderDTO request) {
-        log.info("Updating order: {}", request);
         ordersRepository.findById(request.getId()).flatMap(order -> {
-            order.setTotal_amount(request.getTotal_amount());
+            log.info("Updating order: {}", request);
             order.setOrder_status(request.getOrder_status());
             return ordersRepository.save(order).flatMap(o -> {
                 return itemRepository.findById(request.getOrder_items().getId()).flatMap(item -> {
